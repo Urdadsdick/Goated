@@ -1,0 +1,255 @@
+if game.PlaceId == 11177482306 then
+    -- Load OrionLib for the GUI
+    local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
+    local Window = OrionLib:MakeWindow({
+        Name = "Goat Hub for Street Wars 2",
+        HidePremium = false,
+        SaveConfig = true,
+        ConfigFolder = "GoatHub"
+    })
+
+    -- Global values for toggles
+    _G.killall = false
+    _G.godmode = false
+    _G.autoPickup = false
+    _G.onePunch = false
+    _G.speed = 16  -- Default walk speed
+    _G.sigmaWalk = false
+    _G.killAura = false
+    _G.fly = false
+    _G.mopAutoFarm = false
+
+    -- Function to enable KillAll (fires Tap event continuously)
+    function killAll()
+        while _G.killall do
+            game:GetService("ReplicatedStorage").Remotes.Tap:FireServer()
+            wait(0.0001)  -- Prevents overwhelming the server
+        end
+    end
+
+    -- Function for One Punch kill
+    function enableOnePunch()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        -- Loop to instantly kill enemies with one punch
+        while _G.onePunch do
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                local target = nil
+                for _, obj in pairs(workspace:GetChildren()) do
+                    if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj.Humanoid.Health > 0 then
+                        if (obj.HumanoidRootPart.Position - character.HumanoidRootPart.Position).Magnitude < 10 then
+                            target = obj
+                            break
+                        end
+                    end
+                end
+                if target then
+                    target.Humanoid.Health = 0  -- Instantly kill target
+                end
+            end
+            wait(0.1)
+        end
+    end
+
+    -- Function to enable GodMode (keeps health at max)
+    function enableGodMode()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        if character and character:FindFirstChild("Humanoid") then
+            character.Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+                if _G.godmode and character.Humanoid.Health < character.Humanoid.MaxHealth then
+                    -- Set health back to max
+                    character.Humanoid.Health = character.Humanoid.MaxHealth
+                end
+            end)
+        end
+    end
+
+    -- Function to enable Fly
+    function enableFly()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(400000, 400000, 400000)
+        bodyVelocity.Velocity = Vector3.new(0, 50, 0)  -- Fly upwards
+
+        while _G.fly do
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                bodyVelocity.Parent = character.HumanoidRootPart
+            end
+            wait(0.1)
+        end
+        bodyVelocity:Destroy()  -- Disable flying once toggled off
+    end
+
+    -- Function to enable Sigma Walk
+    function enableSigmaWalk()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        
+        -- Modify walk speed and movement to represent Sigma Walk
+        while _G.sigmaWalk do
+            if character and character:FindFirstChild("Humanoid") then
+                character.Humanoid.WalkSpeed = 100  -- Set high walk speed
+                character.Humanoid.JumpHeight = 50  -- Add higher jump height for Sigma Walk feel
+            end
+            wait(0.1)
+        end
+        -- Reset to default values when toggled off
+        character.Humanoid.WalkSpeed = 16
+        character.Humanoid.JumpHeight = 7
+    end
+
+    -- Function for Kill Aura (damages nearby players on contact)
+    function enableKillAura()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        while _G.killAura do
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                for _, obj in pairs(workspace:GetChildren()) do
+                    if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj.Humanoid.Health > 0 then
+                        if (obj.HumanoidRootPart.Position - character.HumanoidRootPart.Position).Magnitude < 5 then
+                            obj.Humanoid.Health = 0  -- Kill nearby players
+                        end
+                    end
+                end
+            end
+            wait(0.1)
+        end
+    end
+
+    -- GUI Tabs
+    local trollTab = Window:MakeTab({
+        Name = "Troll",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    local playerTab = Window:MakeTab({
+        Name = "Player",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    local autoFarmTab = Window:MakeTab({
+        Name = "AutoFarm",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    local gunsTab = Window:MakeTab({
+        Name = "Guns",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    -- Trolling Features
+    trollTab:AddToggle({
+        Name = "Enable God Mode",
+        Default = false,
+        Callback = function(state)
+            _G.godmode = state
+            if state then
+                enableGodMode()
+            end
+        end
+    })
+
+    trollTab:AddToggle({
+        Name = "Enable One Punch",
+        Default = false,
+        Callback = function(state)
+            _G.onePunch = state
+            if state then
+                enableOnePunch()
+            end
+        end
+    })
+
+    trollTab:AddToggle({
+        Name = "Enable Kill Aura",
+        Default = false,
+        Callback = function(state)
+            _G.killAura = state
+            if state then
+                enableKillAura()
+            end
+        end
+    })
+
+    trollTab:AddToggle({
+        Name = "Enable Fly",
+        Default = false,
+        Callback = function(state)
+            _G.fly = state
+            if state then
+                enableFly()
+            end
+        end
+    })
+
+    trollTab:AddToggle({
+        Name = "Sigma Walk",
+        Default = false,
+        Callback = function(state)
+            _G.sigmaWalk = state
+            if state then
+                enableSigmaWalk()
+            end
+        end
+    })
+
+    -- AutoFarm Features
+    autoFarmTab:AddToggle({
+        Name = "Enable Mop Auto Farm",
+        Default = false,
+        Callback = function(state)
+            _G.mopAutoFarm = state
+            -- Add mop autofarm logic here (e.g., picking up items or interacting with mops)
+        end
+    })
+
+    -- Player Features
+    playerTab:AddSlider({
+        Name = "Walk Speed",
+        Min = 16,
+        Max = 200,
+        Default = 16,
+        Callback = function(value)
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+        end
+    })
+
+    -- Teleports
+    local teleportTab = Window:MakeTab({
+        Name = "Teleports",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    teleportTab:AddButton({
+        Name = "Teleport to Spawn",
+        Callback = function()
+            local character = game.Players.LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = CFrame.new(0, 10, 0)
+            end
+        end
+    })
+
+    teleportTab:AddButton({
+        Name = "Teleport to Shop",
+        Callback = function()
+            local character = game.Players.LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = CFrame.new(100, 10, 100)
+            end
+        end
+    })
+
+    -- Initialize the OrionLib GUI
+    OrionLib:Init()
+end
